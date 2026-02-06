@@ -3,111 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>iOS 26 Bypass</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iOS 26 Link</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body, html { width: 100%; height: 100%; background: #000; font-family: -apple-system, sans-serif; overflow: hidden; }
-
-        /* The GIF Background */
-        #bg-container {
-            position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1;
-        }
-        #bg-container img { width: 100%; height: 100%; object-fit: cover; }
-
-        /* Fake iOS 26 UI Overlay */
-        #lock-screen-ui {
-            position: absolute; inset: 0; z-index: 10;
-            display: flex; flex-direction: column; align-items: center;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.7) 100%);
-            pointer-events: none;
-        }
-
-        .time { margin-top: 80px; font-size: 90px; font-weight: 200; color: white; opacity: 0.9; }
-
-        /* The Music Widget (Like your screenshot) */
-        .widget {
-            position: absolute; bottom: 180px; width: 92%;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
-            border-radius: 24px; padding: 18px;
-            display: flex; align-items: center; pointer-events: auto;
-        }
-
-        .art-box { 
-            width: 55px; height: 55px; background: #222; border-radius: 10px; 
-            overflow: hidden; cursor: pointer; border: 1px solid rgba(255,255,255,0.1);
-        }
-        .art-box img { width: 100%; height: 100%; object-fit: cover; }
-
-        .song-info { margin-left: 15px; flex: 1; color: white; }
-        .song-title { font-weight: 600; font-size: 16px; }
-        .artist { font-size: 14px; opacity: 0.6; }
-
-        /* Upload Panel */
-        #upload-panel {
-            position: absolute; top: 20px; z-index: 100;
-            background: rgba(0,0,0,0.8); padding: 10px; border-radius: 15px;
-            display: flex; gap: 10px; pointer-events: auto;
-        }
-        input { background: #333; color: white; border: none; padding: 5px; border-radius: 5px; }
-        label { background: #fff; color: #000; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: bold;}
+        body { background: #000; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .box { background: #111; padding: 20px; border-radius: 20px; width: 90%; text-align: center; border: 1px solid #333; }
+        input, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: none; font-size: 16px; }
+        input { background: #222; color: white; }
+        button { background: #fff; color: #000; font-weight: bold; cursor: pointer; }
+        #preview { width: 100%; height: 200px; object-fit: cover; border-radius: 10px; margin-top: 10px; display: none; }
     </style>
 </head>
 <body>
 
-    <div id="bg-container">
-        <img id="active-gif" src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJwamZ3bmZ3bmZ3bmZ3bmZ3bmZ3/3o7TKMGpxx136/giphy.gif">
-    </div>
+<div class="box">
+    <h3>iOS 26 Music Trigger</h3>
+    <p style="font-size: 12px; color: #888;">Upload your GIF to activate Lock Screen play</p>
+    
+    <input type="text" id="linkInput" placeholder="Paste GIF link...">
+    <input type="file" id="fileInput" accept="image/*">
+    
+    <button id="activateBtn">ACTIVATE BACKGROUND PLAY</button>
+    
+    <audio id="silentAudio" loop>
+        <source src="https://github.com/anars/blank-audio/blob/master/10-seconds-of-silence.mp3?raw=true" type="audio/mp3">
+    </audio>
 
-    <div id="upload-panel">
-        <input type="text" id="linkInput" placeholder="Paste Link">
-        <label>Upload <input type="file" id="fileInput" hidden accept="image/*"></label>
-    </div>
+    <img id="preview">
+</div>
 
-    <div id="lock-screen-ui">
-        <div class="time" id="clock">12:00</div>
-        
-        <div class="widget">
-            <div class="art-box" onclick="alert('iOS 26 Background Play Active')">
-                <img id="widget-art" src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJwamZ3bmZ3bmZ3bmZ3bmZ3bmZ3/3o7TKMGpxx136/giphy.gif">
-            </div>
-            <div class="song-info">
-                <div class="song-title">Background Loop</div>
-                <div class="artist">iOS 26 Style</div>
-            </div>
-            <div style="font-size: 20px; color: white; opacity: 0.8;"> II </div>
-        </div>
-    </div>
+<script>
+    const activateBtn = document.getElementById('activateBtn');
+    const silentAudio = document.getElementById('silentAudio');
+    const preview = document.getElementById('preview');
+    const fileInput = document.getElementById('fileInput');
+    const linkInput = document.getElementById('linkInput');
 
-    <script>
-        const activeGif = document.getElementById('active-gif');
-        const widgetArt = document.getElementById('widget-art');
-        const linkInput = document.getElementById('linkInput');
-        const fileInput = document.getElementById('fileInput');
+    // This function sets the Metadata that shows up on your REAL Lock Screen
+    function setMetadata() {
+        if ('mediaSession' in navigator) {
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: 'iOS 26 Background Play',
+                artist: 'Custom GIF Active',
+                album: 'Visualizer',
+                artwork: [
+                    { src: preview.src, sizes: '512x512', type: 'image/png' }
+                ]
+            });
+        }
+    }
 
-        // Handle Links
-        linkInput.onchange = () => {
-            activeGif.src = linkInput.value;
-            widgetArt.src = linkInput.value;
-        };
+    function handleMedia(src) {
+        preview.src = src;
+        preview.style.display = 'block';
+        setMetadata();
+    }
 
-        // Handle Uploads
-        fileInput.onchange = (e) => {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                activeGif.src = event.target.result;
-                widgetArt.src = event.target.result;
-            };
-            reader.readAsDataURL(e.target.files[0]);
-        };
+    activateBtn.onclick = () => {
+        silentAudio.play(); // Starts the "Silence" so iOS shows the widget
+        alert("System Active! Lock your screen to see the widget.");
+    };
 
-        // Live Clock
-        setInterval(() => {
-            const now = new Date();
-            document.getElementById('clock').innerText = now.getHours() + ":" + String(now.getMinutes()).padStart(2, '0');
-        }, 1000);
-    </script>
+    linkInput.onchange = () => handleMedia(linkInput.value);
+    fileInput.onchange = (e) => {
+        const reader = new FileReader();
+        reader.onload = (event) => handleMedia(event.target.result);
+        reader.readAsDataURL(e.target.files[0]);
+    };
+</script>
+
 </body>
 </html>
