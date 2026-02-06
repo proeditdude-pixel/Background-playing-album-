@@ -5,109 +5,109 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Music</title>
+    <title>iOS 26 Bypass</title>
     <style>
-        :root { --glass: rgba(255, 255, 255, 0.1); }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; font-family: -apple-system, BlinkMacSystemFont, sans-serif; overflow: hidden; color: white; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { width: 100%; height: 100%; background: #000; font-family: -apple-system, sans-serif; overflow: hidden; }
 
-        /* The Animated Background (The GIF/Video) */
-        #bg-layer {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 1; filter: brightness(0.6) saturate(1.2);
-            object-fit: cover;
+        /* The GIF Background */
+        #bg-container {
+            position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1;
+        }
+        #bg-container img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Fake iOS 26 UI Overlay */
+        #lock-screen-ui {
+            position: absolute; inset: 0; z-index: 10;
+            display: flex; flex-direction: column; align-items: center;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.7) 100%);
+            pointer-events: none;
         }
 
-        /* The iOS Glass Overlay */
-        .overlay {
-            position: absolute; inset: 0; z-index: 2;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.8) 100%);
-            display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
-            padding-bottom: 60px;
+        .time { margin-top: 80px; font-size: 90px; font-weight: 200; color: white; opacity: 0.9; }
+
+        /* The Music Widget (Like your screenshot) */
+        .widget {
+            position: absolute; bottom: 180px; width: 92%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border-radius: 24px; padding: 18px;
+            display: flex; align-items: center; pointer-events: auto;
         }
 
-        /* iOS 26 Style Album Art Container */
-        .album-art {
-            width: 85%; aspect-ratio: 1/1;
-            border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            margin-bottom: 40px; overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.1);
+        .art-box { 
+            width: 55px; height: 55px; background: #222; border-radius: 10px; 
+            overflow: hidden; cursor: pointer; border: 1px solid rgba(255,255,255,0.1);
         }
-        .album-art img, .album-art iframe { width: 100%; height: 100%; object-fit: cover; border: none; }
+        .art-box img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* Player Controls */
-        .info { width: 85%; margin-bottom: 30px; }
-        .song-title { font-size: 24px; font-weight: 700; margin-bottom: 5px; }
-        .artist { font-size: 18px; color: rgba(255,255,255,0.6); }
+        .song-info { margin-left: 15px; flex: 1; color: white; }
+        .song-title { font-weight: 600; font-size: 16px; }
+        .artist { font-size: 14px; opacity: 0.6; }
 
-        .progress-bar { width: 85%; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; margin-bottom: 40px; position: relative; }
-        .progress-fill { width: 35%; height: 100%; background: #fff; border-radius: 2px; }
-
-        .controls { display: flex; gap: 50px; align-items: center; margin-bottom: 20px; }
-        .play-btn { width: 60px; height: 60px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: black; font-size: 24px; cursor: pointer; }
-
-        /* Input for the GIF link - hidden until long-press or tap */
-        #config { position: absolute; top: 20px; z-index: 100; width: 80%; opacity: 0; transition: 0.3s; }
-        #config:hover, #config:focus-within { opacity: 1; }
-        input { width: 100%; padding: 10px; border-radius: 10px; border: none; background: rgba(255,255,255,0.2); color: white; backdrop-filter: blur(10px); }
+        /* Upload Panel */
+        #upload-panel {
+            position: absolute; top: 20px; z-index: 100;
+            background: rgba(0,0,0,0.8); padding: 10px; border-radius: 15px;
+            display: flex; gap: 10px; pointer-events: auto;
+        }
+        input { background: #333; color: white; border: none; padding: 5px; border-radius: 5px; }
+        label { background: #fff; color: #000; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: bold;}
     </style>
 </head>
 <body>
 
-    <div id="media-bg">
-        <img id="bg-layer" src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJwamZ3bmZ3bmZ3bmZ3bmZ3bmZ3/3o7TKMGpxx136/giphy.gif">
+    <div id="bg-container">
+        <img id="active-gif" src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJwamZ3bmZ3bmZ3bmZ3bmZ3bmZ3/3o7TKMGpxx136/giphy.gif">
     </div>
 
-    <div id="config">
-        <input type="text" id="urlInput" placeholder="Paste GIF or YT link here...">
+    <div id="upload-panel">
+        <input type="text" id="linkInput" placeholder="Paste Link">
+        <label>Upload <input type="file" id="fileInput" hidden accept="image/*"></label>
     </div>
 
-    <div class="overlay">
-        <div class="album-art" id="main-art">
-            <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJwamZ3bmZ3bmZ3bmZ3bmZ3bmZ3/3o7TKMGpxx136/giphy.gif" id="art-img">
-        </div>
-
-        <div class="info">
-            <div class="song-title">Background Loop</div>
-            <div class="artist">iOS 26 Style</div>
-        </div>
-
-        <div class="progress-bar">
-            <div class="progress-fill"></div>
-        </div>
-
-        <div class="controls">
-            <span style="font-size: 30px;">⏮</span>
-            <div class="play-btn" id="toggleBtn">II</div>
-            <span style="font-size: 30px;">⏭</span>
+    <div id="lock-screen-ui">
+        <div class="time" id="clock">12:00</div>
+        
+        <div class="widget">
+            <div class="art-box" onclick="alert('iOS 26 Background Play Active')">
+                <img id="widget-art" src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJwamZ3bmZ3bmZ3bmZ3bmZ3bmZ3/3o7TKMGpxx136/giphy.gif">
+            </div>
+            <div class="song-info">
+                <div class="song-title">Background Loop</div>
+                <div class="artist">iOS 26 Style</div>
+            </div>
+            <div style="font-size: 20px; color: white; opacity: 0.8;"> II </div>
         </div>
     </div>
 
-<script>
-    const input = document.getElementById('urlInput');
-    const bgLayer = document.getElementById('bg-layer');
-    const artImg = document.getElementById('art-img');
-    const mainArt = document.getElementById('main-art');
-    const mediaBg = document.getElementById('media-bg');
+    <script>
+        const activeGif = document.getElementById('active-gif');
+        const widgetArt = document.getElementById('widget-art');
+        const linkInput = document.getElementById('linkInput');
+        const fileInput = document.getElementById('fileInput');
 
-    input.addEventListener('change', () => {
-        const url = input.value;
-        if(url.includes('youtube.com') || url.includes('youtu.be')) {
-            const id = url.split('v=')[1]?.split('&')[0] || url.split('/').pop();
-            const embed = `<iframe src="https://www.youtube.com/embed/${id}?autoplay=1&loop=1&playlist=${id}&mute=1&controls=0" allow="autoplay"></iframe>`;
-            mediaBg.innerHTML = embed;
-            mainArt.innerHTML = embed;
-            mediaBg.firstChild.id = "bg-layer"; // Re-assign ID for styling
-        } else {
-            bgLayer.src = url;
-            artImg.src = url;
-        }
-    });
+        // Handle Links
+        linkInput.onchange = () => {
+            activeGif.src = linkInput.value;
+            widgetArt.src = linkInput.value;
+        };
 
-    // Toggle Play/Pause icon just for visual effect
-    const toggleBtn = document.getElementById('toggleBtn');
-    toggleBtn.onclick = () => {
-        toggleBtn.innerText = toggleBtn.innerText === 'II' ? '▶' : 'II';
-    };
-</script>
+        // Handle Uploads
+        fileInput.onchange = (e) => {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                activeGif.src = event.target.result;
+                widgetArt.src = event.target.result;
+            };
+            reader.readAsDataURL(e.target.files[0]);
+        };
+
+        // Live Clock
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.getHours() + ":" + String(now.getMinutes()).padStart(2, '0');
+        }, 1000);
+    </script>
 </body>
 </html>
