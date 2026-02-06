@@ -2,170 +2,72 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Obsidian Loop</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <title>Bypass Loop</title>
     <style>
-        :root {
-            --bg: #050505;
-            --card: #111111;
-            --accent: #ffffff;
-            --text: #ffffff;
-            --subtext: #888888;
-        }
-
-        body {
-            background-color: var(--bg);
-            color: var(--text);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-        }
-
-        .container {
-            width: 90%;
-            max-width: 450px;
-            background: var(--card);
-            padding: 30px;
-            border-radius: 28px;
-            border: 1px solid #222;
-            text-align: center;
-            box-shadow: 0 40px 100px rgba(0,0,0,0.8);
-            transition: all 0.4s ease;
-        }
-
-        /* Input Styles */
-        input[type="text"] {
-            width: 100%;
-            padding: 14px;
-            background: #000;
-            border: 1px solid #333;
-            border-radius: 12px;
-            color: white;
-            margin-bottom: 15px;
-            box-sizing: border-box;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
-
-        .btn {
-            padding: 12px 24px;
-            border-radius: 12px;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            transition: 0.2s;
-        }
-
-        .btn-primary { background: var(--accent); color: black; }
-        .btn-stop { background: #ff4444; color: white; display: none; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { width: 100%; height: 100%; background: #000; overflow: hidden; font-family: sans-serif; }
         
-        .upload-label {
-            color: var(--subtext);
-            font-size: 0.9rem;
-            cursor: pointer;
-            text-decoration: underline;
+        #display-container {
+            width: 100vw; height: 100vh;
+            display: flex; justify-content: center; align-items: center;
         }
 
-        /* Media Player Area */
-        #media-container {
-            margin-top: 20px;
-            width: 100%;
-            border-radius: 16px;
-            overflow: hidden;
-            background: #000;
-            aspect-ratio: 16/9;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        img, iframe {
+            width: 100%; height: 100%;
+            object-fit: cover; /* Makes it fill the screen like a wallpaper */
+            border: none;
         }
 
-        iframe, img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            animation: fadeIn 0.8s ease;
+        /* The Control Panel - it fades away so it doesn't ruin the look */
+        #ui {
+            position: absolute; bottom: 50px; left: 50%;
+            transform: translateX(-50%);
+            z-index: 100; background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(15px); padding: 15px;
+            border-radius: 20px; transition: opacity 0.3s;
+            border: 1px solid rgba(255,255,255,0.1);
         }
 
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        input {
+            background: rgba(0,0,0,0.5); border: 1px solid #444;
+            color: white; padding: 10px; border-radius: 10px; outline: none;
+        }
+
+        .hidden { opacity: 0; pointer-events: none; }
     </style>
 </head>
-<body>
+<body onclick="toggleUI()">
 
-<div class="container">
-    <h1 style="font-size: 1.5rem; margin-top:0;">Obsidian Loop</h1>
-    
-    <input type="text" id="linkInput" placeholder="Paste GIF or YouTube URL...">
-    
-    <div class="button-group">
-        <button class="btn btn-primary" id="playBtn">Start Loop</button>
-        <button class="btn btn-stop" id="stopBtn">Stop</button>
-    </div>
+<div id="ui">
+    <input type="text" id="urlInput" placeholder="Paste Link & Hide" onclick="event.stopPropagation()">
+</div>
 
-    <label class="upload-label">
-        Or upload file
-        <input type="file" id="fileInput" style="display:none" accept="image/*">
-    </label>
-
-    <div id="media-container">
-        <p id="status" style="color:#444">Ready</p>
-    </div>
+<div id="display-container">
+    <p id="msg" style="color: #444;">Tap to show controls</p>
 </div>
 
 <script>
-    const linkInput = document.getElementById('linkInput');
-    const playBtn = document.getElementById('playBtn');
-    const stopBtn = document.getElementById('stopBtn');
-    const mediaContainer = document.getElementById('media-container');
-    const fileInput = document.getElementById('fileInput');
+    const input = document.getElementById('urlInput');
+    const container = document.getElementById('display-container');
+    const ui = document.getElementById('ui');
 
-    function extractYTId(url) {
-        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-        const match = url.match(regExp);
-        return (match && match[2].length === 11) ? match[2] : null;
-    }
-
-    function startPlay() {
-        const val = linkInput.value;
-        const ytId = extractYTId(val);
-
-        if (ytId) {
-            // Embed YT with Loop and Mute (Auto-play requires mute in most browsers)
-            mediaContainer.innerHTML = `<iframe src="https://www.youtube.com/embed/${ytId}?autoplay=1&loop=1&playlist=${ytId}&mute=1&controls=0" frameborder="0" allow="autoplay"></iframe>`;
-        } else if (val) {
-            mediaContainer.innerHTML = `<img src="${val}" />`;
+    input.addEventListener('change', () => {
+        const url = input.value;
+        if (url.includes('youtube.com') || url.includes('youtu.be')) {
+            const id = url.split('v=')[1]?.split('&')[0] || url.split('/').pop();
+            container.innerHTML = `<iframe src="https://www.youtube.com/embed/${id}?autoplay=1&loop=1&playlist=${id}&mute=1&controls=0&showinfo=0&modestbranding=1" allow="autoplay"></iframe>`;
+        } else {
+            container.innerHTML = `<img src="${url}">`;
         }
-        
-        playBtn.style.display = 'none';
-        stopBtn.style.display = 'inline-block';
+        ui.classList.add('hidden');
+    });
+
+    function toggleUI() {
+        ui.classList.toggle('hidden');
     }
-
-    function stopPlay() {
-        mediaContainer.innerHTML = '<p id="status" style="color:#444">Ready</p>';
-        playBtn.style.display = 'inline-block';
-        stopBtn.style.display = 'none';
-    }
-
-    playBtn.onclick = startPlay;
-    stopBtn.onclick = stopPlay;
-
-    fileInput.onchange = (e) => {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            mediaContainer.innerHTML = `<img src="${event.target.result}" />`;
-            playBtn.style.display = 'none';
-            stopBtn.style.display = 'inline-block';
-        };
-        reader.readAsDataURL(e.target.files[0]);
-    };
 </script>
-
 </body>
 </html>
